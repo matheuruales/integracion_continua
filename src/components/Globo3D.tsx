@@ -140,10 +140,6 @@ export default function Globo3D() {
       
       setMousePosition({ x: event.clientX, y: event.clientY });
       
-      // Simple continent detection based on mouse position
-      const normalizedX = (x + 1) / 2;
-      const normalizedY = (y + 1) / 2;
-      
       let closestContinent = null;
       let minDistance = Infinity;
       

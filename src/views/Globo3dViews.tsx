@@ -1,8 +1,6 @@
-import { useState } from "react";
 import Globo3D from "../components/Globo3D";
 
 export default function Globo3dViews() {
-  const [isLoading, setIsLoading] = useState(true);
 
   return (
     <div className="space-y-8">
