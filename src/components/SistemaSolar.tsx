@@ -87,9 +87,15 @@ export default function SistemaSolar() {
 
   useEffect(() => {
     if (!mountRef.current) return;
+    console.info('[SistemaSolar] useEffect start');
 
-    // Limpiar contenido existente
-    mountRef.current.innerHTML = '';
+  // Limpiar contenido existente
+  mountRef.current.innerHTML = '';
+
+  // Resetar colecciones internas (importante en StrictMode / remounts)
+  planetsRef.current = [];
+  planetGroupsRef.current = [];
+  animationIdRef.current = null;
 
     // Escena
     const scene = new THREE.Scene();
@@ -106,21 +112,32 @@ export default function SistemaSolar() {
     camera.position.set(0, 20, 50);
     cameraRef.current = camera;
 
-    // Renderer
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  // Renderer
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  // Use container size (more robust inside layout) and device pixel ratio
+  const mount = mountRef.current!;
+  const mountWidth = mount.clientWidth || window.innerWidth;
+  const mountHeight = mount.clientHeight || window.innerHeight;
+  renderer.setPixelRatio(window.devicePixelRatio || 1);
+  renderer.setSize(mountWidth, mountHeight);
+  // ensure canvas displays as block so sizing is reliable
+  renderer.domElement.style.display = 'block';
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     rendererRef.current = renderer;
-    mountRef.current.appendChild(renderer.domElement);
+  mountRef.current.appendChild(renderer.domElement);
+  console.info('[SistemaSolar] renderer appended, canvas client size:', mount.clientWidth, 'x', mount.clientHeight);
 
     // Controles
-    const controls = new OrbitControls(camera, renderer.domElement);
+  const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controls.minDistance = 10;
     controls.maxDistance = 200;
     controlsRef.current = controls;
+  // Ensure controls target is centered on the Sun
+  controls.target.set(0, 0, 0);
+  controls.update();
 
     // Luces
     const ambientLight = new THREE.AmbientLight(0x404040, 0.3);
@@ -143,14 +160,14 @@ export default function SistemaSolar() {
 
     // Datos de planetas [radio, distancia, velocidad orbital, color]
     const planetConfigs = [
-      { name: 'mercury', radius: 0.4, distance: 8, speed: 0.04, color: 0x8c7853 },
-      { name: 'venus', radius: 0.7, distance: 12, speed: 0.03, color: 0xffc649 },
-      { name: 'earth', radius: 0.8, distance: 16, speed: 0.02, color: 0x6b93d6 },
-      { name: 'mars', radius: 0.6, distance: 20, speed: 0.015, color: 0xcd5c5c },
-      { name: 'jupiter', radius: 2.2, distance: 28, speed: 0.008, color: 0xd8ca9d },
-      { name: 'saturn', radius: 1.8, distance: 36, speed: 0.006, color: 0xfad5a5 },
-      { name: 'uranus', radius: 1.2, distance: 44, speed: 0.004, color: 0x4fd0e7 },
-      { name: 'neptune', radius: 1.1, distance: 52, speed: 0.003, color: 0x4b70dd }
+      { name: 'mercury', radius: 0.4, distance: 8, speed: 0.0005, color: 0x8c7853 },
+      { name: 'venus', radius: 0.7, distance: 12, speed: 0.0005, color: 0xffc649 },
+      { name: 'earth', radius: 0.8, distance: 16, speed: 0.0005, color: 0x6b93d6 },
+      { name: 'mars', radius: 0.6, distance: 20, speed: 0.0005, color: 0xcd5c5c },
+      { name: 'jupiter', radius: 2.2, distance: 28, speed: 0.0005, color: 0xd8ca9d },
+      { name: 'saturn', radius: 1.8, distance: 36, speed: 0.0005, color: 0xfad5a5 },
+      { name: 'uranus', radius: 1.2, distance: 44, speed: 0.0005, color: 0x4fd0e7 },
+      { name: 'neptune', radius: 1.1, distance: 52, speed: 0.0005, color: 0x4b70dd }
     ];
 
     // Crear planetas
@@ -211,43 +228,64 @@ export default function SistemaSolar() {
       }
     };
 
+    // Soporta click/pointer/touch
     renderer.domElement.addEventListener('click', handleClick);
+    renderer.domElement.addEventListener('pointerdown', handleClick as any);
+    const touchHandler = (e: TouchEvent) => {
+      if (e.touches && e.touches.length > 0) {
+        const t = e.touches[0];
+        const fakeEvent = new MouseEvent('click', { clientX: t.clientX, clientY: t.clientY });
+        handleClick(fakeEvent as MouseEvent);
+      }
+    };
+    renderer.domElement.addEventListener('touchstart', touchHandler);
 
     // Animación
     const animate = () => {
       animationIdRef.current = requestAnimationFrame(animate);
 
-      // Rotar planetas alrededor del sol
-      planetGroupsRef.current.forEach((group, index) => {
-        const config = planetConfigs[index];
-        group.rotation.y += config.speed;
-      });
+      try {
+        // Rotar planetas alrededor del sol
+        planetGroupsRef.current.forEach((group, index) => {
+          const config = planetConfigs[index];
+          group.rotation.y += config.speed;
+        });
 
-      // Rotar planetas sobre su propio eje
-      planetsRef.current.forEach((planet) => {
-        planet.rotation.y += 0.01;
-      });
+        // Rotar planetas sobre su propio eje
+        planetsRef.current.forEach((planet) => {
+          planet.rotation.y += 0.01;
+        });
 
-      controls.update();
-      renderer.render(scene, camera);
+        controls.update();
+        renderer.render(scene, camera);
+      } catch (err) {
+        console.error('[SistemaSolar] error during animate:', err);
+        if (animationIdRef.current) cancelAnimationFrame(animationIdRef.current);
+      }
     };
 
     // Handler de redimensionamiento
     const handleResize = () => {
-      if (!camera || !renderer) return;
-      
-      camera.aspect = window.innerWidth / window.innerHeight;
+      if (!camera || !rendererRef.current || !mountRef.current) return;
+
+      const w = mountRef.current.clientWidth || window.innerWidth;
+      const h = mountRef.current.clientHeight || window.innerHeight;
+
+      camera.aspect = w / h;
       camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
+      rendererRef.current.setSize(w, h);
+      rendererRef.current.setPixelRatio(window.devicePixelRatio || 1);
     };
 
     window.addEventListener('resize', handleResize);
 
-    // Iniciar animación con delay para asegurar carga
+    // Marcar cargado antes de lanzar la animación para que el indicador no quede bloqueado
+    setIsLoaded(true);
+    // Iniciar animación con pequeño delay para asegurar que todo esté listo
     setTimeout(() => {
+      console.info('[SistemaSolar] starting animation loop');
       animate();
-      setIsLoaded(true);
-    }, 500);
+    }, 200);
 
     // Cleanup
     return () => {
@@ -257,6 +295,8 @@ export default function SistemaSolar() {
       
       window.removeEventListener('resize', handleResize);
       renderer.domElement.removeEventListener('click', handleClick);
+      renderer.domElement.removeEventListener('pointerdown', handleClick as any);
+      renderer.domElement.removeEventListener('touchstart', touchHandler);
       
       if (mountRef.current && renderer.domElement) {
         if (renderer.domElement.parentNode === mountRef.current) {
@@ -410,7 +450,8 @@ export default function SistemaSolar() {
           position: 'absolute',
           top: 0,
           left: 0,
-          background: 'transparent'
+          background: 'transparent',
+          border: '2px dashed rgba(255,0,0,0.06)'
         }} 
       />
 

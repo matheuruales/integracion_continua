@@ -38,6 +38,15 @@ const Mesh = jest.fn().mockImplementation(() => ({
   position: { x: 0, y: 0, z: 0 },
 }));
 
+const Group = jest.fn().mockImplementation(() => ({
+  add: jest.fn(),
+  rotation: { y: 0 },
+}));
+
+const RingGeometry = jest.fn().mockImplementation(() => ({
+  dispose: jest.fn(),
+}));
+
 const AmbientLight = jest.fn().mockImplementation(() => ({}));
 const DirectionalLight = jest.fn().mockImplementation(() => ({
   position: { set: jest.fn() },
@@ -73,6 +82,8 @@ module.exports = {
   SphereGeometry,
   MeshPhongMaterial,
   Mesh,
+  Group,
+  RingGeometry,
   AmbientLight,
   DirectionalLight,
   CanvasTexture,
