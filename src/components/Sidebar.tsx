@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { FaHome, FaCube, FaColumns, FaMicrophone, FaShapes, FaCalculator, FaRuler, FaKey, FaMouse, FaList } from "react-icons/fa";
+import { FaGlobe, FaCalculator, FaRuler, FaKey, FaMouse, FaList } from "react-icons/fa";
 
 interface SidebarItem {
   label: string;
@@ -8,12 +8,8 @@ interface SidebarItem {
   icon?: React.ReactNode;
 }
 
-const mainItems: SidebarItem[] = [
-  { label: "Inicio", route: "/", icon: <FaHome /> },
-  { label: "Three.js Demo", route: "/three", icon: <FaCube /> },
-  { label: "Responsive Layouts", route: "/layouts", icon: <FaColumns /> },
-  { label: "Text-to-Speech", route: "/tts", icon: <FaMicrophone /> },
-  { label: "Figuras Geometricas", route: "/three_2", icon: <FaShapes /> },
+const socialSciences: SidebarItem[] = [
+  { label: "Globo3D", route: "/globo3D", icon: <FaGlobe /> },
 ];
 
 const exerciseItems: SidebarItem[] = [
@@ -46,16 +42,16 @@ export default function Sidebar() {
     <aside className="hidden md:block w-full md:w-[240px] border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
       <div className="p-3 space-y-1">
 
-        {/* Acordeón Main Items */}
+        {/* Acordeón Ciencias Naturales */}
         <button
           onClick={() => setOpenMain(!openMain)}
           className="w-full text-left flex items-center justify-between rounded-lg px-3 py-2 text-slate-700 dark:text-slate-300 
                      hover:bg-slate-50 dark:hover:bg-slate-800 font-medium"
         >
-          Menú Principal
+          Ciencias Sociales
           <span>{openMain ? "▲" : "▼"}</span>
         </button>
-        {openMain && <div className="pl-4 space-y-1">{mainItems.map(renderNavItem)}</div>}
+        {openMain && <div className="pl-4 space-y-1">{socialSciences.map(renderNavItem)}</div>}
 
         {/* Acordeón Exercises */}
         <button
