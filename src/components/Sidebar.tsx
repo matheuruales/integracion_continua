@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { FaGlobe, FaCalculator, FaRuler, FaKey, FaMouse, FaList } from "react-icons/fa";
+import { FaGlobe, FaLeaf } from "react-icons/fa";
 
 interface SidebarItem {
   label: string;
@@ -12,12 +12,8 @@ const socialSciences: SidebarItem[] = [
   { label: "Globo3D", route: "/globo3D", icon: <FaGlobe /> },
 ];
 
-const exerciseItems: SidebarItem[] = [
-  { label: "Tablas de Multiplicar", route: "/tablasmul", icon: <FaCalculator /> },
-  { label: "Conversor de Unidades", route: "/conversorunid", icon: <FaRuler /> },
-  { label: "Validadador de Contraseñas", route: "/validcontrasena", icon: <FaKey /> },
-  { label: "Contador de Clics con Almacenamiento", route: "/contadorclics", icon: <FaMouse /> },
-  { label: "Lista de Tareas", route: "/listareas", icon: <FaList /> },
+const naturalSciences: SidebarItem[] = [
+  { label: "Sistema Solar Interactivo", route: "/sistemasolar", icon: <FaLeaf /> },
 ];
 
 export default function Sidebar() {
@@ -59,10 +55,10 @@ export default function Sidebar() {
           className="w-full text-left flex items-center justify-between rounded-lg px-3 py-2 text-slate-700 dark:text-slate-300 
                      hover:bg-slate-50 dark:hover:bg-slate-800 font-medium"
         >
-          Ejercicios - Jtest
+          Ciencias Naturales
           <span>{openExercises ? "▲" : "▼"}</span>
         </button>
-        {openExercises && <div className="pl-4 space-y-1">{exerciseItems.map(renderNavItem)}</div>}
+        {openExercises && <div className="pl-4 space-y-1">{naturalSciences.map(renderNavItem)}</div>}
 
       </div>
     </aside>

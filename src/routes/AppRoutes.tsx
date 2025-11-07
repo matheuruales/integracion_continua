@@ -14,6 +14,7 @@ import ValidContrasena from "../views/ValidContrasena";
 import ContadorClics from "../views/ContadorClics";
 import ListaTareas from "../views/ListaTareas";
 import Globo3dViews from "../views/Globo3dViews"; 
+import SistemaSolarView from "../views/SistemaSolarView";
 
 export default function AppRoutes() {
   return (
@@ -31,6 +32,7 @@ export default function AppRoutes() {
         <Route path="contadorclics" element={<ContadorClics />} />
         <Route path="listareas" element={<ListaTareas />} />
         <Route path="globo3D" element={<Globo3dViews />} />
+        <Route path="sistemasolar" element={<SistemaSolarView />} />
       </Route>
     </Routes>
   );
