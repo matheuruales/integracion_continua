@@ -1,3 +1,6 @@
+/* eslint-env node */
+/* eslint-disable no-undef */
+
 // Mock para Three.js
 const Scene = jest.fn().mockImplementation(() => ({
   background: null,

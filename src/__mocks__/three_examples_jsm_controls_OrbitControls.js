@@ -1,3 +1,6 @@
+/* eslint-env node */
+/* eslint-disable no-undef */
+
 // Mock para OrbitControls
 class OrbitControls {
   constructor(camera, domElement) {
