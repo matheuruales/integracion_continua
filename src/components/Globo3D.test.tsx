@@ -11,7 +11,8 @@ jest.mock('three', () => {
     copy(v: Vector3){ this.set(v.x,v.y,v.z); return this; }
   }
   class Color {
-    constructor(public hex?: any) {}
+    // no creamos propiedad para evitar "unused"
+    constructor(_hex?: any) {}
   }
   class Scene {
     background: any;
@@ -48,10 +49,17 @@ jest.mock('three', () => {
   class Mesh {
     rotation = { x:0, y:0, z:0 };
     castShadow = false; receiveShadow = false;
-    position = { x:0, y:0, z:0, set(x:number,y:number,z:number){ this.x=x; this.y=y; this.z=z; } , copy(v:Vector3){ this.set(v.x,v.y,v.z); } };
+    position = {
+      x:0, y:0, z:0,
+      set(x:number,y:number,z:number){ this.x=x; this.y=y; this.z=z; },
+      copy(v:Vector3){ this.set(v.x,v.y,v.z); }
+    };
     constructor(_geo?:any,_mat?:any){}
   }
-  class Points { rotation = { x:0, y:0 }; constructor(_geo:any,_mat:any){} }
+  class Points {
+    rotation = { x:0, y:0 };
+    constructor(_geo:any,_mat:any){}
+  }
   class AmbientLight { constructor(_c:any,_i?:number){} }
   class DirectionalLight {
     position = new Vector3();
@@ -65,7 +73,8 @@ jest.mock('three', () => {
   }
   class Texture { dispose(){/* no-op */} }
   class TextureLoader {
-    load(_url:string, onLoad?: (t:Texture)=>void){
+    // Nota: nombramos el parámetro del callback sin usar con "_" para evitar "unused"
+    load(_url:string, onLoad?: (_texture:any)=>void){
       const tex = new Texture();
       if (onLoad) onLoad(tex); // carga inmediata
       return tex;
@@ -74,7 +83,6 @@ jest.mock('three', () => {
   const PCFSoftShadowMap = 1;
 
   return {
-    // constantes/clases utilizadas por el componente
     Vector3, Color, Scene, PerspectiveCamera, WebGLRenderer,
     SphereGeometry, BufferGeometry, Float32BufferAttribute,
     MeshPhongMaterial, MeshStandardMaterial, PointsMaterial,
@@ -128,7 +136,7 @@ describe('Globo3D (básico que pasa sí o sí)', () => {
     // Avanzamos el timeout interno de 1000ms del componente
     act(() => { jest.advanceTimersByTime(1100); });
 
-    // Como el TextureLoader mock llama onLoad inmediatamente, debe aparecer el “cargada”
+    // El TextureLoader mock llama onLoad inmediatamente, debe aparecer el “cargada”
     expect(screen.getByText(/✅ Tierra real cargada/i)).toBeInTheDocument();
   });
 });
