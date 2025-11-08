@@ -8,11 +8,6 @@ import LayoutsView from "../views/LayoutsView";
 import SpeechDemoView from "../views/SpeechDemoView";
 import GeometryExplorer from "../views/GeometryExplorer";
 import SettingsView from "../views/SettingsView";
-import TablasMul from "../views/TablasMul";
-import ConversorUnid from "../views/ConversorUnid";
-import ValidContrasena from "../views/ValidContrasena";
-import ContadorClics from "../views/ContadorClics";
-import ListaTareas from "../views/ListaTareas";
 import Globo3dViews from "../views/Globo3dViews"; 
 import SistemaSolarView from "../views/SistemaSolarView";
 
@@ -26,11 +21,6 @@ export default function AppRoutes() {
         <Route path="tts" element={<SpeechDemoView />} />
         <Route path="three_2" element={<GeometryExplorer />} />
         <Route path="settings" element={<SettingsView />} />
-        <Route path="tablasmul" element={<TablasMul />} />
-        <Route path="conversorunid" element={<ConversorUnid />} />
-        <Route path="validcontrasena" element={<ValidContrasena />} />
-        <Route path="contadorclics" element={<ContadorClics />} />
-        <Route path="listareas" element={<ListaTareas />} />
         <Route path="globo3D" element={<Globo3dViews />} />
         <Route path="sistemasolar" element={<SistemaSolarView />} />
       </Route>
