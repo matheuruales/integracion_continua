@@ -157,8 +157,8 @@ export default function HomePage() {
               emoji: "🗺️"
             },
             { 
-              to: "/simetria", 
-              label: "Aprender Simetría", 
+              to: "/geometry", 
+              label: "Aprender Geometry", 
               icon: "🔷",
               color: "bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600",
               emoji: "✨"
