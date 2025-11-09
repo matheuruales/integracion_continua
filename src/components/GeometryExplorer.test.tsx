@@ -4,14 +4,22 @@ import GeometryExplorer from './GeometryExplorer';
 // Mock three core used by the component
 jest.mock('three', () => {
   class Vector3 { x=0; y=0; z=0; constructor(x=0,y=0,z=0){ this.x=x; this.y=y; this.z=z; } set(x:number,y:number,z:number){ this.x=x; this.y=y; this.z=z; return this; } }
-  class Color { constructor(_c?: any) {} }
+  class Color {
+    constructor(_c?: any) {}
+    multiplyScalar() { return this; }
+  }
   class Scene { background:any; add(){/*noop*/} clear(){/*noop*/} }
   class PerspectiveCamera { aspect:number=1; position:any = { set:()=>{}, z:0 }; projectionMatrix = {}; constructor(_fov?:any, aspect?:number){ this.aspect = aspect || 1; } updateProjectionMatrix(){} }
   class WebGLRenderer { domElement: HTMLCanvasElement = global.document.createElement('canvas'); shadowMap: any = { enabled:false, type: 0 }; setSize(){} setPixelRatio(){} render(){} dispose(){} }
   class Mesh { rotation:any = { x:0, y:0, z:0, set:(_x:number,_y:number,_z:number)=>{} }; position:any = { set:()=>{}, x:0,y:0,z:0 }; scale:any = { setScalar:(_v:number)=>{}, set:()=>{} }; castShadow=false; receiveShadow=false; geometry:any; material:any; constructor(geo?:any, mat?:any){ this.geometry = geo; this.material = mat; } }
   class MeshStandardMaterial { color:any; constructor(_opts?:any){ this.color = new Color(); } }
   class AmbientLight { constructor(){} }
-  class DirectionalLight { position = new Vector3(); constructor(){} }
+  class DirectionalLight {
+    position = new Vector3();
+    shadow = { mapSize: { width: 0, height: 0 } };
+    constructor(){}
+  }
+  class PointLight { position = new Vector3(); constructor(){} }
   class BoxGeometry { dispose(){} constructor(){} }
   class SphereGeometry { dispose(){} constructor(){} }
   class ConeGeometry { dispose(){} constructor(){} }
@@ -25,7 +33,7 @@ jest.mock('three', () => {
 
   return {
     Vector3, Color, Scene, PerspectiveCamera, WebGLRenderer,
-    Mesh, MeshStandardMaterial, AmbientLight, DirectionalLight,
+    Mesh, MeshStandardMaterial, AmbientLight, DirectionalLight, PointLight,
     BoxGeometry, SphereGeometry, ConeGeometry, CylinderGeometry, PlaneGeometry,
     BufferGeometry, BufferAttribute, TextureLoader, ShadowMaterial, PCFSoftShadowMap
   };
@@ -47,21 +55,33 @@ Object.defineProperty(HTMLElement.prototype, 'clientWidth', { configurable: true
 Object.defineProperty(HTMLElement.prototype, 'clientHeight', { configurable: true, get() { return 600; } });
 
 describe('GeometryExplorer component', () => {
-  test('renders UI elements and canvas', () => {
+  test('renders inmersive UI elements and canvas', () => {
     const { container } = render(<GeometryExplorer />);
 
-    // UI inputs
     expect(screen.getByLabelText('shape-select')).toBeInTheDocument();
     expect(screen.getByLabelText('color-input')).toBeInTheDocument();
     expect(screen.getByLabelText('scale-range')).toBeInTheDocument();
     expect(screen.getByLabelText('reset-button')).toBeInTheDocument();
     expect(screen.getByLabelText('autorotate-toggle')).toBeInTheDocument();
+    expect(screen.getByTestId('shape-detail-card')).toBeInTheDocument();
 
-    // Canvas injected by the renderer
     expect(container.querySelector('canvas')).toBeTruthy();
   });
 
-  test('color and scale controls update and reset works', () => {
+  test('descriptive card updates when the shape changes', () => {
+    render(<GeometryExplorer />);
+
+    const shapeSelect = screen.getByLabelText('shape-select') as HTMLSelectElement;
+    expect(screen.getByTestId('shape-detail-title')).toHaveTextContent(/Cubo/i);
+    expect(screen.getByTestId('shape-fact')).toHaveTextContent(/caras gemelas/i);
+
+    fireEvent.change(shapeSelect, { target: { value: 'Sphere' } });
+
+    expect(screen.getByTestId('shape-detail-title')).toHaveTextContent(/Esfera/i);
+    expect(screen.getByTestId('shape-detail-examples')).toHaveTextContent(/Planetas/i);
+  });
+
+  test('color, escala y auto-rotación responden y se pueden reiniciar', () => {
     render(<GeometryExplorer />);
 
     const colorInput = screen.getByLabelText('color-input') as HTMLInputElement;
@@ -69,22 +89,18 @@ describe('GeometryExplorer component', () => {
     const resetBtn = screen.getByLabelText('reset-button');
     const autoBtn = screen.getByLabelText('autorotate-toggle');
 
-    // change color
     fireEvent.change(colorInput, { target: { value: '#ff0000' } });
     expect((screen.getByLabelText('color-input') as HTMLInputElement).value).toBe('#ff0000');
 
-    // change scale and see textual representation update
     fireEvent.change(scaleRange, { target: { value: '1.5' } });
-    expect(screen.getByText('1.50×')).toBeInTheDocument();
+    expect(screen.getByTestId('scale-indicator')).toHaveTextContent('1.50×');
 
-    // toggle autorotate
     fireEvent.click(autoBtn);
-    expect(autoBtn).toHaveTextContent(/Auto-rotar: On/i);
+    expect(autoBtn).toHaveTextContent(/Activada/i);
 
-    // reset
     fireEvent.click(resetBtn);
     expect((screen.getByLabelText('color-input') as HTMLInputElement).value).toBe('#60a5fa');
-    expect(screen.getByText('1.00×')).toBeInTheDocument();
+    expect(screen.getByTestId('scale-indicator')).toHaveTextContent('1.00×');
     expect((screen.getByLabelText('shape-select') as HTMLSelectElement).value).toBe('Cube');
   });
 });

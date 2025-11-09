@@ -4,6 +4,58 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
 type ShapeType = 'Cube' | 'Sphere' | 'Pyramid' | 'Prism' | 'Cylinder';
 
+type ShapeDetail = {
+  title: string;
+  description: string;
+  examples: string;
+  fact: string;
+  emoji: string;
+  accent: string;
+};
+
+const SHAPE_DETAILS: Record<ShapeType, ShapeDetail> = {
+  Cube: {
+    title: 'Cubo Inventor',
+    description: 'La figura perfecta para construir dados, cajas y edificios futuristas con líneas definidas.',
+    examples: 'Dados, cubos de Rubik, bloques de construcción',
+    fact: 'Sus 6 caras gemelas permiten apilarlo con facilidad en cualquier dirección.',
+    emoji: '🔷',
+    accent: '#60a5fa'
+  },
+  Sphere: {
+    title: 'Esfera Galáctica',
+    description: 'Super suave y aerodinámica, ideal para planetas, burbujas y mundos flotantes.',
+    examples: 'Planetas, pelotas deportivas, gotas de agua',
+    fact: 'Cada punto de la superficie está a la misma distancia del centro, por eso rueda tan bien.',
+    emoji: '🌐',
+    accent: '#a855f7'
+  },
+  Pyramid: {
+    title: 'Pirámide Ancestral',
+    description: 'Estable y elegante, perfecta para construir templos o esculturas con energía misteriosa.',
+    examples: 'Pirámides egipcias, kioscos modernos, cristales',
+    fact: 'Con una base cuadrada y un ápice puntiagudo, concentra la fuerza en la cima.',
+    emoji: '🛕',
+    accent: '#f97316'
+  },
+  Prism: {
+    title: 'Prisma Creativo',
+    description: 'Gran compañero para dividir la luz y crear estructuras dinámicas y futuristas.',
+    examples: 'Prismas de luz, refugios minimalistas, esculturas',
+    fact: 'Sus caras rectangulares conectan dos triángulos gemelos, creando volumen con pocos vértices.',
+    emoji: '🔺',
+    accent: '#10b981'
+  },
+  Cylinder: {
+    title: 'Cilindro Futurista',
+    description: 'Combina círculos y rectas, ideal para cohetes, columnas y robots simpáticos.',
+    examples: 'Latas, torres, motores, columnas',
+    fact: 'Si cortas el cilindro a lo largo obtienes un rectángulo perfecto: magia geométrica.',
+    emoji: '🛸',
+    accent: '#f472b6'
+  }
+};
+
 const DEFAULT_COLOR = '#60a5fa';
 const DEFAULT_SCALE = 1;
 
@@ -94,7 +146,7 @@ export default function GeometryExplorer() {
     mount.innerHTML = '';
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xf8fafc);
+    scene.background = new THREE.Color(0x0a0a0f);
     sceneRef.current = scene;
 
     const width = mount.clientWidth || 800;
@@ -103,18 +155,41 @@ export default function GeometryExplorer() {
     camera.position.set(0, 1.5, 4);
     cameraRef.current = camera;
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    const renderer = new THREE.WebGLRenderer({ 
+      antialias: true, 
+      alpha: true,
+      powerPreference: "high-performance"
+    });
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     rendererRef.current = renderer;
     mount.appendChild(renderer.domElement);
 
-    const ambient = new THREE.AmbientLight(0xffffff, 0.8);
+    // Enhanced lighting
+    const ambient = new THREE.AmbientLight(0x404060, 0.4);
     scene.add(ambient);
-    const dir = new THREE.DirectionalLight(0xffffff, 0.6);
-    dir.position.set(5, 10, 7.5);
-    scene.add(dir);
+    
+    const dir1 = new THREE.DirectionalLight(0xffffff, 0.8);
+    dir1.position.set(5, 10, 7.5);
+    dir1.castShadow = true;
+    dir1.shadow.mapSize.width = 2048;
+    dir1.shadow.mapSize.height = 2048;
+    scene.add(dir1);
+
+    const dir2 = new THREE.DirectionalLight(0x6688ff, 0.3);
+    dir2.position.set(-5, -5, -5);
+    scene.add(dir2);
+
+    // Add subtle point lights for better depth
+    const pointLight1 = new THREE.PointLight(0x4466ff, 0.4, 20);
+    pointLight1.position.set(3, 3, 3);
+    scene.add(pointLight1);
+
+    const pointLight2 = new THREE.PointLight(0xff4466, 0.2, 20);
+    pointLight2.position.set(-3, -3, -3);
+    scene.add(pointLight2);
 
     // Controls
     const controls = new OrbitControls(camera, renderer.domElement);
@@ -126,7 +201,12 @@ export default function GeometryExplorer() {
     controlsRef.current = controls;
 
     // Create initial mesh
-    const material = new THREE.MeshStandardMaterial({ color: new THREE.Color(color), roughness: 0.5 });
+    const material = new THREE.MeshStandardMaterial({ 
+      color: new THREE.Color(color), 
+      roughness: 0.3,
+      metalness: 0.2,
+      emissive: new THREE.Color(color).multiplyScalar(0.1)
+    });
 
     function makeGeometry(t: ShapeType) {
       switch (t) {
@@ -135,32 +215,24 @@ export default function GeometryExplorer() {
         case 'Sphere':
           return new THREE.SphereGeometry(0.9, 32, 24);
         case 'Pyramid':
-          // square pyramid: use ConeGeometry with 4 radial segments
           return new THREE.ConeGeometry(1, 1.2, 4);
         case 'Prism': {
-          // triangular prism - custom geometry
           const geom = new THREE.BufferGeometry();
-          // 6 vertices, two triangles for each rectangular face etc. We'll create a simple triangular prism
-          const a = 0.9; // base triangle size
-          // triangular prism dimensions
-          // front triangle, back triangle (offset in y)
+          const a = 0.9;
           const vertices = new Float32Array([
-            // front triangle
             -a / 2, -0.4, -0.5,
             a / 2, -0.4, -0.5,
             0, -0.4, 0.5,
-            // back triangle
             -a / 2, 0.4, -0.5,
             a / 2, 0.4, -0.5,
             0, 0.4, 0.5
           ]);
-          // indices - two triangles per triangular face + rectangular faces
           const indices = new Uint16Array([
-            0, 1, 2, // front
-            3, 5, 4, // back
-            0, 3, 1, 3, 4, 1, // side 1
-            1, 4, 2, 4, 5, 2, // side 2
-            2, 5, 0, 5, 3, 0 // side 3
+            0, 1, 2,
+            3, 5, 4,
+            0, 3, 1, 3, 4, 1,
+            1, 4, 2, 4, 5, 2,
+            2, 5, 0, 5, 3, 0
           ]);
           geom.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
           geom.setIndex(new THREE.BufferAttribute(indices, 1));
@@ -182,12 +254,15 @@ export default function GeometryExplorer() {
     meshRef.current = mesh;
     scene.add(mesh);
 
-    // Ground shadow plane (subtle)
-    const planeGeo = new THREE.PlaneGeometry(6, 6);
-    const planeMat = new THREE.ShadowMaterial({ opacity: 0.12 });
+    // Enhanced ground plane with gradient
+    const planeGeo = new THREE.PlaneGeometry(8, 8);
+    const planeMat = new THREE.ShadowMaterial({ 
+      opacity: 0.15,
+      transparent: true
+    });
     const plane = new THREE.Mesh(planeGeo, planeMat);
     plane.rotation.x = -Math.PI / 2;
-    plane.position.y = -0.9;
+    plane.position.y = -1;
     plane.receiveShadow = true;
     scene.add(plane);
 
@@ -196,7 +271,6 @@ export default function GeometryExplorer() {
       animationIdRef.current = requestAnimationFrame(animate);
       if (meshRef.current) {
         if (autoRotate && controlsRef.current) {
-          // small continuous rotation when autoRotate is on
           meshRef.current.rotation.y += 0.01;
         }
       }
@@ -230,7 +304,6 @@ export default function GeometryExplorer() {
       }
       setIsLoaded(false);
     };
-    // only mount once; refresh of mesh handled below
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -239,9 +312,9 @@ export default function GeometryExplorer() {
     const mesh = meshRef.current;
     if (!mesh) return;
 
-    // Replace geometry
     const oldGeo = mesh.geometry;
-  let newGeo: THREE.BufferGeometry | undefined;
+    let newGeo: THREE.BufferGeometry | undefined;
+    
     switch (shape) {
       case 'Cube':
         newGeo = new THREE.BoxGeometry(1, 1, 1);
@@ -286,14 +359,14 @@ export default function GeometryExplorer() {
       try { (oldGeo as any).dispose && (oldGeo as any).dispose(); } catch (e) { /* ignore */ }
     }
 
-    // Update material color
+    // Update material with enhanced properties
     const mat = mesh.material as THREE.MeshStandardMaterial;
     mat.color = new THREE.Color(color);
+    mat.emissive = new THREE.Color(color).multiplyScalar(0.1);
 
     // Update scale
     mesh.scale.setScalar(scale);
 
-    // autoRotate toggled on controls
     if (controlsRef.current) controlsRef.current.autoRotate = autoRotate;
   }, [shape, color, scale, autoRotate]);
 
@@ -310,87 +383,204 @@ export default function GeometryExplorer() {
     if (controlsRef.current) controlsRef.current.reset();
   };
 
+  const shapeDetail = SHAPE_DETAILS[shape];
+  const statBadges = [
+    { label: 'Caras', value: info.faces },
+    { label: 'Vértices', value: info.vertices },
+    { label: 'Bordes', value: info.edges },
+    { label: 'Volumen ≈', value: info.volume.toFixed(2) }
+  ];
+
   return (
-    <div className="w-full h-full min-h-[520px] bg-white rounded-lg shadow-md relative overflow-hidden">
-      <div className="absolute top-4 left-4 z-20 space-y-3">
-        <div className="bg-white bg-opacity-95 px-3 py-2 rounded-2xl shadow text-sm">
-          <label className="block font-bold text-slate-700 mb-2">Forma</label>
-          <select
-            aria-label="shape-select"
-            value={shape}
-            onChange={(e) => setShape(e.target.value as ShapeType)}
-            className="w-40 rounded-lg p-2 border-2 border-slate-200"
+    <div className="relative w-full h-full min-h-[640px] overflow-hidden rounded-3xl bg-gradient-to-br from-gray-900 via-slate-950 to-indigo-950 text-white shadow-2xl border border-gray-800">
+      {/* Enhanced background effects */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -left-12 top-6 h-56 w-56 rounded-full bg-blue-600/20 blur-3xl animate-pulse-slow" />
+        <div className="absolute right-0 bottom-0 h-72 w-72 translate-x-1/3 rounded-full bg-purple-600/15 blur-[150px] animate-pulse-slower" />
+        <div className="absolute left-1/2 top-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-indigo-600/10 blur-[180px]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,_rgba(120,119,198,0.15),_transparent_50%)]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-slate-950/40 to-slate-950/80" />
+      </div>
+
+      {/* Left Control Panel */}
+      <div className="absolute top-6 left-6 z-20 w-[300px] space-y-4">
+        <div className="rounded-3xl border border-white/10 bg-slate-900/70 backdrop-blur-xl p-6 text-white shadow-2xl">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-2 h-8 bg-gradient-to-b from-blue-500 to-purple-500 rounded-full"></div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-300">Panel creativo</p>
+              <h3 className="text-2xl font-black text-white mt-1">Diseña tu figura</h3>
+            </div>
+          </div>
+          
+          <p className="text-sm text-slate-300 mb-6">Cambia la forma, color y tamaño en tiempo real como si fuera plastilina digital.</p>
+
+          <div className="space-y-5">
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-[0.3em] text-blue-300 mb-3 block">Forma</label>
+              <select
+                aria-label="shape-select"
+                value={shape}
+                onChange={(e) => setShape(e.target.value as ShapeType)}
+                className="w-full rounded-2xl border border-gray-700 bg-slate-800/50 px-4 py-3 text-sm font-semibold text-white shadow-inner focus:border-blue-500 focus:outline-none transition-all duration-200 hover:bg-slate-800/70"
+              >
+                <option>Cube</option>
+                <option>Sphere</option>
+                <option>Pyramid</option>
+                <option>Prism</option>
+                <option>Cylinder</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-[0.3em] text-blue-300 mb-3 block">Color</label>
+              <div className="flex items-center gap-3 rounded-2xl border border-gray-700 bg-slate-800/50 px-4 py-3 transition-all duration-200 hover:bg-slate-800/70">
+                <input
+                  aria-label="color-input"
+                  type="color"
+                  value={color}
+                  onChange={(e) => setColor(e.target.value)}
+                  className="h-12 w-16 cursor-pointer rounded-xl border border-gray-600 bg-transparent p-0 transition-transform hover:scale-105"
+                />
+                <div className="flex-1">
+                  <span className="text-sm font-semibold text-slate-200">{color.toUpperCase()}</span>
+                  <div className="h-2 rounded-full bg-gradient-to-r from-transparent via-current to-transparent mt-1 opacity-50"></div>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-[0.3em] text-blue-300 mb-3 block">Escala</label>
+              <div>
+                <input
+                  aria-label="scale-range"
+                  type="range"
+                  min={0.4}
+                  max={2}
+                  step={0.01}
+                  value={scale}
+                  onChange={(e) => setScale(Number(e.target.value))}
+                  className="w-full accent-blue-500 hover:accent-blue-400 transition-all"
+                />
+                <div className="flex justify-between items-center mt-2">
+                  <span className="text-xs text-slate-400">Pequeño</span>
+                  <span className="text-sm font-bold text-white" data-testid="scale-indicator">{scale.toFixed(2)}×</span>
+                  <span className="text-xs text-slate-400">Grande</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <button
+                aria-label="reset-button"
+                onClick={reset}
+                className="rounded-2xl border border-yellow-500/30 bg-yellow-600/20 px-4 py-3 text-sm font-bold text-yellow-100 transition-all duration-200 hover:bg-yellow-500/30 hover:border-yellow-400/50 active:scale-95"
+              >
+                Reiniciar
+              </button>
+
+              <button
+                aria-label="autorotate-toggle"
+                onClick={() => setAutoRotate((v) => !v)}
+                className={`rounded-2xl border px-4 py-3 text-sm font-bold transition-all duration-200 active:scale-95 ${
+                  autoRotate 
+                    ? 'border-green-500/50 bg-green-600/20 text-green-100 hover:bg-green-500/30' 
+                    : 'border-gray-600 bg-slate-800/50 text-slate-300 hover:bg-slate-700/50'
+                }`}
+              >
+                {autoRotate ? '🔄 Activada' : '⏸️ Detenida'}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-white/5 bg-gradient-to-br from-slate-800/40 to-slate-900/60 p-4 text-sm text-white backdrop-blur-xl">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-pulse"></div>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-blue-300">Consejo pro</p>
+          </div>
+          <p className="text-slate-200">Pulsa y arrastra el modelo para explorar cada cara como si fueras un astronauta miniatura.</p>
+        </div>
+      </div>
+
+      {/* Right Info Panel */}
+      <div className="absolute top-6 right-6 z-20 w-[340px] space-y-4">
+        <div
+          className="rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900/80 to-slate-800/60 p-6 text-white backdrop-blur-xl shadow-2xl"
+          data-testid="shape-detail-card"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-4xl drop-shadow-lg" aria-hidden="true">{shapeDetail.emoji}</span>
+            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20">
+              <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-pulse"></div>
+              <span className="text-xs font-semibold uppercase tracking-[0.3em] text-blue-300">Ficha creativa</span>
+            </div>
+          </div>
+          
+          <h4
+            data-testid="shape-detail-title"
+            className="text-2xl font-black text-white mb-3"
           >
-            <option>Cube</option>
-            <option>Sphere</option>
-            <option>Pyramid</option>
-            <option>Prism</option>
-            <option>Cylinder</option>
-          </select>
+            {shapeDetail.title}
+          </h4>
+          <p className="text-sm text-slate-300 leading-relaxed">{shapeDetail.description}</p>
 
-          <div className="mt-3">
-            <label className="block font-bold text-slate-700 mb-2">Color</label>
-            <input
-              aria-label="color-input"
-              type="color"
-              value={color}
-              onChange={(e) => setColor(e.target.value)}
-              className="w-20 h-10 p-0 border-0"
-            />
+          <div
+            data-testid="shape-detail-examples"
+            className="mt-4 rounded-xl bg-gradient-to-r from-white/10 to-white/5 p-4 border border-white/10"
+          >
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-300 mb-2">Ejemplos reales</p>
+            <p className="text-sm font-semibold text-white">{shapeDetail.examples}</p>
           </div>
+        </div>
 
-          <div className="mt-3">
-            <label className="block font-bold text-slate-700 mb-2">Escala</label>
-            <input
-              aria-label="scale-range"
-              type="range"
-              min={0.4}
-              max={2}
-              step={0.01}
-              value={scale}
-              onChange={(e) => setScale(Number(e.target.value))}
-              className="w-40"
-            />
-            <div className="text-xs text-slate-500">{scale.toFixed(2)}×</div>
+        <div
+          className="rounded-2xl border border-white/5 bg-gradient-to-br from-slate-900/80 to-slate-800/60 p-5 backdrop-blur-xl"
+          style={{ 
+            boxShadow: `0 8px 32px ${shapeDetail.accent}20, inset 0 1px 0 ${shapeDetail.accent}10` 
+          }}
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-1.5 h-1.5 bg-purple-400 rounded-full animate-pulse"></div>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-purple-300">Dato curioso</p>
           </div>
-
-          <div className="mt-3 flex space-x-2">
-            <button
-              aria-label="reset-button"
-              onClick={reset}
-              className="bg-yellow-400 hover:bg-yellow-500 text-slate-900 px-3 py-2 rounded-lg text-sm font-bold"
-            >
-              Reiniciar
-            </button>
-
-            <button
-              aria-label="autorotate-toggle"
-              onClick={() => setAutoRotate((v) => !v)}
-              className="bg-blue-400 hover:bg-blue-500 text-white px-3 py-2 rounded-lg text-sm font-bold"
-            >
-              Auto-rotar: {autoRotate ? 'On' : 'Off'}
-            </button>
-          </div>
+          <p className="text-white leading-relaxed" data-testid="shape-fact">{shapeDetail.fact}</p>
         </div>
       </div>
 
-      <div className="absolute top-4 right-4 z-20 bg-white bg-opacity-95 px-4 py-3 rounded-2xl shadow text-sm max-w-xs">
-        <h4 className="font-bold text-slate-700">Datos</h4>
-        <div className="mt-2 text-xs text-slate-600">
-          <div>Forma: <span className="font-medium">{shape}</span></div>
-          <div>Caras: <span className="font-medium">{info.faces}</span></div>
-          <div>Vértices: <span className="font-medium">{info.vertices}</span></div>
-          <div>Bordes: <span className="font-medium">{info.edges}</span></div>
-          <div>Volumen ≈ <span className="font-medium">{info.volume.toFixed(2)}</span></div>
-        </div>
+      {/* 3D Canvas */}
+      <div
+        ref={mountRef}
+        className="relative z-10 w-full rounded-3xl"
+        style={{ minHeight: 640 }}
+      />
+
+      {/* Stats Bar */}
+      <div className="absolute bottom-6 left-1/2 z-20 flex -translate-x-1/2 flex-wrap items-center justify-center gap-3 px-6">
+        {statBadges.map((stat) => (
+          <div
+            key={stat.label}
+            className="rounded-2xl border border-white/20 bg-gradient-to-b from-white/15 to-white/10 px-5 py-3 text-center backdrop-blur-xl shadow-lg transition-all duration-200 hover:scale-105"
+          >
+            <p className="text-[11px] uppercase tracking-[0.3em] text-white/70 mb-1">{stat.label}</p>
+            <p className="text-lg font-black text-white">{stat.value}</p>
+          </div>
+        ))}
       </div>
 
-      <div ref={mountRef} className="w-full h-full rounded-lg overflow-hidden bg-transparent" style={{ minHeight: 520 }} />
-
-      {/* small loading indicator for tests */}
+      {/* Loading Screen */}
       {!isLoaded && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="bg-white p-4 rounded-lg shadow">Cargando geometría...</div>
+        <div className="absolute inset-0 z-30 flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950">
+          <div className="text-center">
+            <div className="relative mb-6">
+              <div className="w-20 h-20 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-2xl">📐</span>
+              </div>
+            </div>
+            <p className="text-xl font-black text-white mb-2">Cargando geometría...</p>
+            <p className="text-sm text-slate-400">Preparando materiales 3D súper brillantes</p>
+          </div>
         </div>
       )}
     </div>
