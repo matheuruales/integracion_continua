@@ -1,4 +1,4 @@
-# Logs
+# ───────── Logs ─────────
 logs
 *.log
 npm-debug.log*
@@ -7,19 +7,66 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# ───────── Node / Dependencias ─────────
 node_modules
 specs
+
+# ───────── Builds / Producción ─────────
 dist
 dist-ssr
-*.local
+build
+.esbuild/
+.vite/
 
-# Editor directories and files
+# ───────── Archivos locales ─────────
+*.local
+*.tsbuildinfo
+*.pid
+*.pid.lock
+*.seed
+*.tgz
+
+# ───────── Coverage (Jest) ─────────
+coverage/
+.jest/
+jest-cache/
+jest-stare/
+
+# ───────── Caches de herramientas ─────────
+.cache/
+.parcel-cache/
+.turbo/
+
+# ───────── Sistema operativo ─────────
+.DS_Store
+Thumbs.db
+.Spotlight-V100
+.Trashes
+
+# ───────── IDE / Editor ─────────
 .vscode/*
 !.vscode/extensions.json
 .idea
-.DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+# ───────── Env files ─────────
+.env
+.env.*
+!.env.example
+
+# ───────── Storybook / Cypress (por si acaso) ─────────
+storybook-static/
+.cypress/
+playwright-report/
+test-results/
+
+# ───────── Mapas de código ─────────
+*.map
+
+# ───────── NO IGNORAR (se mantienen visibles) ─────────
+!public/
+!src/
