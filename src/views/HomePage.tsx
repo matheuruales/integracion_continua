@@ -150,7 +150,7 @@ export default function HomePage() {
               emoji: "🚀"
             },
             { 
-              to: "/globo-3d", 
+              to: "/globo3D", 
               label: "Conocer la Tierra", 
               icon: "🌍",
               color: "bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600",
