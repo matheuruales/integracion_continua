@@ -139,6 +139,7 @@ export default function SistemaSolar() {
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.5; // << +50%
     rendererRef.current = renderer;
+    renderer.domElement.setAttribute('data-testid', 'solarsystem-canvas');
     mount.appendChild(renderer.domElement);
 
     // Controles

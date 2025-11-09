@@ -10,7 +10,8 @@ export default function GeometryExplorer() {
 
   // Inicialización de la escena
   useEffect(() => {
-    if (!mountRef.current) return;
+    const mount = mountRef.current;
+    if (!mount) return;
 
     // Crear escena
     const scene = new THREE.Scene();
@@ -19,7 +20,7 @@ export default function GeometryExplorer() {
     // Cámara
     const camera = new THREE.PerspectiveCamera(
       75,
-      mountRef.current.clientWidth / mountRef.current.clientHeight,
+      mount.clientWidth / mount.clientHeight,
       0.1,
       1000
     );
@@ -27,9 +28,9 @@ export default function GeometryExplorer() {
 
     // Renderizador
     const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight);
-    mountRef.current.innerHTML = ""; // Limpia el contenedor
-    mountRef.current.appendChild(renderer.domElement);
+    renderer.setSize(mount.clientWidth, mount.clientHeight);
+    mount.innerHTML = ""; // Limpia el contenedor
+    mount.appendChild(renderer.domElement);
 
     // Geometría inicial
     const geometry = new THREE.BoxGeometry(1, 1, 1);
@@ -61,7 +62,9 @@ export default function GeometryExplorer() {
     // Cleanup
     return () => {
       renderer.dispose();
-      mountRef.current?.removeChild(renderer.domElement);
+      if (mount.contains(renderer.domElement)) {
+        mount.removeChild(renderer.domElement);
+      }
     };
   }, [rotation]);
 

@@ -165,6 +165,7 @@ export default function GeometryExplorer() {
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     rendererRef.current = renderer;
+    renderer.domElement.setAttribute('data-testid', 'geometry-canvas');
     mount.appendChild(renderer.domElement);
 
     // Enhanced lighting
@@ -356,7 +357,7 @@ export default function GeometryExplorer() {
 
     if (newGeo) {
       mesh.geometry = newGeo as THREE.BufferGeometry;
-      try { (oldGeo as any).dispose && (oldGeo as any).dispose(); } catch (e) { /* ignore */ }
+      try { (oldGeo as any).dispose && (oldGeo as any).dispose(); } catch (_err) { /* ignore */ }
     }
 
     // Update material with enhanced properties

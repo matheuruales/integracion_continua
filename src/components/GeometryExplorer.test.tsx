@@ -56,7 +56,7 @@ Object.defineProperty(HTMLElement.prototype, 'clientHeight', { configurable: tru
 
 describe('GeometryExplorer component', () => {
   test('renders inmersive UI elements and canvas', () => {
-    const { container } = render(<GeometryExplorer />);
+    render(<GeometryExplorer />);
 
     expect(screen.getByLabelText('shape-select')).toBeInTheDocument();
     expect(screen.getByLabelText('color-input')).toBeInTheDocument();
@@ -65,7 +65,7 @@ describe('GeometryExplorer component', () => {
     expect(screen.getByLabelText('autorotate-toggle')).toBeInTheDocument();
     expect(screen.getByTestId('shape-detail-card')).toBeInTheDocument();
 
-    expect(container.querySelector('canvas')).toBeTruthy();
+    expect(screen.getByTestId('geometry-canvas')).toBeInTheDocument();
   });
 
   test('descriptive card updates when the shape changes', () => {

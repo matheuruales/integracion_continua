@@ -291,8 +291,7 @@ describe('SistemaSolar', () => {
       },
     ] as Intersects);
 
-    const canvas = document.querySelector('canvas') as HTMLCanvasElement;
-    expect(canvas).toBeTruthy();
+    const canvas = screen.getByTestId('solarsystem-canvas') as HTMLCanvasElement;
 
     // Recuperar el handler real registrado en el canvas mockeado y dispararlo manualmente.
     const clickHandler = (canvas.addEventListener as unknown as jest.Mock)
