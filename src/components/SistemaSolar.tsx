@@ -81,6 +81,29 @@ const planetTextures: Record<string, string> = {
   neptune: '/textures/planets/neptune.jpg'
 };
 
+const createStarField = (scene: THREE.Scene, starCount = 400) => {
+  const starGeometry = new THREE.SphereGeometry(0.15, 8, 8);
+  const starMaterial = new THREE.MeshBasicMaterial({
+    color: 0xffffff,
+    transparent: true,
+    opacity: 0.85
+  });
+
+  for (let i = 0; i < starCount; i++) {
+    const star = new THREE.Mesh(starGeometry, starMaterial);
+    const radius = 80 + Math.random() * 220;
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.acos(2 * Math.random() - 1);
+    star.position.set(
+      radius * Math.sin(phi) * Math.cos(theta),
+      radius * Math.sin(phi) * Math.sin(theta),
+      radius * Math.cos(phi)
+    );
+    star.scale.setScalar(0.5 + Math.random() * 0.8);
+    scene.add(star);
+  }
+};
+
 export default function SistemaSolar() {
   const mountRef = useRef<HTMLDivElement>(null);
 
@@ -211,6 +234,9 @@ export default function SistemaSolar() {
     });
     const sunGlow = new THREE.Mesh(sunGlowGeometry, sunGlowMaterial);
     sun.add(sunGlow);
+
+    // Estrellas de fondo para dar profundidad al espacio
+    createStarField(scene);
 
     // Configs planetarias
     const planetConfigs = [
