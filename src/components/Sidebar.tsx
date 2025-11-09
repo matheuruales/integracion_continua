@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { FaGlobe, FaLeaf, FaStar, FaTree, FaMountain } from "react-icons/fa";
+import { FaGlobe, FaLeaf, FaStar, FaTree, FaMountain, FaCube } from "react-icons/fa";
 
 interface SidebarItem {
   label: string;
@@ -16,9 +16,14 @@ const naturalSciences: SidebarItem[] = [
   { label: "🚀 Viaje Espacial", route: "/sistemasolar", icon: <FaStar className="text-yellow-400" /> },
 ];
 
+const geometryItems: SidebarItem[] = [
+  { label: "🧊 Explorador de Geometría", route: "/geometry", icon: <FaCube className="text-purple-500" /> },
+];
+
 export default function Sidebar() {
   const [openMain, setOpenMain] = useState(false);
   const [openExercises, setOpenExercises] = useState(false);
+  const [openMath, setOpenMath] = useState(false);
 
   const renderNavItem = ({ label, route, icon }: SidebarItem) => (
     <NavLink
@@ -96,6 +101,28 @@ export default function Sidebar() {
           {openExercises && (
             <div className="mt-3 space-y-2 animate-slideDown">
               {naturalSciences.map(renderNavItem)}
+            </div>
+          )}
+        </div>
+
+        {/* Acordeón Matemáticas */}
+        <div className="bg-white/80 dark:bg-slate-800/80 rounded-2xl p-2 shadow-md border-2 border-purple-200 dark:border-purple-700">
+          <button
+            onClick={() => setOpenMath(!openMath)}
+            className="w-full text-left flex items-center justify-between rounded-xl px-4 py-3 
+                       bg-gradient-to-r from-purple-400 to-indigo-500 text-white font-bold
+                       hover:from-purple-500 hover:to-indigo-600 transition-all duration-300 
+                       shadow-lg hover:shadow-xl transform hover:scale-105"
+          >
+            <div className="flex items-center gap-3">
+              <FaCube className="text-xl" />
+              <span className="text-lg">Matemáticas</span>
+            </div>
+            <span className="text-xl animate-bounce">{openMath ? "👆" : "👇"}</span>
+          </button>
+          {openMath && (
+            <div className="mt-3 space-y-2 animate-slideDown">
+              {geometryItems.map(renderNavItem)}
             </div>
           )}
         </div>
