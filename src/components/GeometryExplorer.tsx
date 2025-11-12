@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
-type ShapeType = 'Cube' | 'Sphere' | 'Pyramid' | 'Prism' | 'Cylinder';
+type ShapeType = 'Cube' | 'Sphere' | 'Pyramid' | 'Prism' | 'Cylinder' | 'Dodecahedron';
 
 type ShapeDetail = {
   title: string;
@@ -53,6 +53,15 @@ const SHAPE_DETAILS: Record<ShapeType, ShapeDetail> = {
     fact: 'Si cortas el cilindro a lo largo obtienes un rectángulo perfecto: magia geométrica.',
     emoji: '🛸',
     accent: '#f472b6'
+  }
+  ,
+  Dodecahedron: {
+    title: 'Dodecaedro Místico',
+    description: 'Una figura platónica con caras pentagonales — elegante y compleja, perfecta para arte y puzzles.',
+    examples: 'Cristales geométricos, rompecabezas, diseños ornamentales',
+    fact: 'Tiene 12 caras pentagonales, 20 vértices y 30 aristas; su simetría inspira arquitectura y diseño.',
+    emoji: '🔷',
+    accent: '#8b5cf6'
   }
 };
 
@@ -112,6 +121,18 @@ function getShapeInfo(type: ShapeType, size: number) {
         vertices: 0,
         edges: 2,
         volume: Math.PI * r * r * h
+      };
+    }
+    case 'Dodecahedron': {
+      // assume `size` as a base scale for the geometry (approximate side-related volume)
+      // exact volume for a regular dodecahedron with side length a is ((15+7*sqrt(5))/4) * a^3
+      const a = size;
+      const coeff = (15 + 7 * Math.sqrt(5)) / 4; // ≈ 7.66311896
+      return {
+        faces: 12,
+        vertices: 20,
+        edges: 30,
+        volume: coeff * Math.pow(a, 3)
       };
     }
     default:
@@ -217,6 +238,9 @@ export default function GeometryExplorer() {
           return new THREE.SphereGeometry(0.9, 32, 24);
         case 'Pyramid':
           return new THREE.ConeGeometry(1, 1.2, 4);
+        case 'Dodecahedron':
+          // use a radius that visually matches other shapes
+          return new (THREE as any).DodecahedronGeometry(0.9);
         case 'Prism': {
           const geom = new THREE.BufferGeometry();
           const a = 0.9;
@@ -326,6 +350,9 @@ export default function GeometryExplorer() {
       case 'Pyramid':
         newGeo = new THREE.ConeGeometry(1, 1.2, 4);
         break;
+      case 'Dodecahedron':
+        newGeo = new (THREE as any).DodecahedronGeometry(0.9);
+        break;
       case 'Prism': {
         const geom = new THREE.BufferGeometry();
         const a = 0.9;
@@ -429,6 +456,7 @@ export default function GeometryExplorer() {
                 <option>Sphere</option>
                 <option>Pyramid</option>
                 <option>Prism</option>
+                <option>Dodecahedron</option>
                 <option>Cylinder</option>
               </select>
             </div>
