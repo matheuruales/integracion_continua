@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
-type ShapeType = 'Cube' | 'Sphere' | 'Pyramid' | 'Prism' | 'Cylinder' | 'Dodecahedron' | 'Torus';
+type ShapeType = 'Cube' | 'Sphere' | 'Pyramid' | 'Prism' | 'Cylinder' | 'Dodecahedron' | 'Torus' | 'Mobius';
 
 type ShapeDetail = {
   title: string;
@@ -68,9 +68,18 @@ const SHAPE_DETAILS: Record<ShapeType, ShapeDetail> = {
     title: 'Torus Hipnótico',
     description: 'Un anillo perfecto: ideal para simulaciones, anillos y geometría topológica divertida.',
     examples: 'Anillos, neumáticos, diseños procedurales',
-    fact: 'Un toro es una superficie con un agujero (género 1); su volumen depende del radio mayor y menor.',
+    fact: 'Un torus es una superficie con un agujero; su volumen depende del radio mayor y menor.',
     emoji: '⭕',
     accent: '#06b6d4'
+  }
+  ,
+  Mobius: {
+    title: 'Mobius Enigmático',
+    description: 'Una tira con una sola cara y un solo borde — perfecta para demostraciones topológicas y arte cinético.',
+    examples: 'Esculturas, demostraciones matemáticas, efectos visuales',
+    fact: 'El anillo de Möbius es una superficie no orientable con sólo un lado; no contiene un volumen bien definido.',
+    emoji: '➰',
+    accent: '#f59e0b'
   }
 };
 
@@ -157,6 +166,15 @@ function getShapeInfo(type: ShapeType, size: number) {
         volume
       };
     }
+    case 'Mobius': {
+      // Mobius has no well-defined faces/vertices in this UI context — present conceptual info
+      return {
+        faces: 0,
+        vertices: 0,
+        edges: 1,
+        volume: 0
+      };
+    }
     default:
       return { faces: 0, vertices: 0, edges: 0, volume: 0 };
   }
@@ -179,6 +197,139 @@ export default function GeometryExplorer() {
 
   // Exposed UI-friendly info for tests/labels
   const info = getShapeInfo(shape, 1 * scale);
+
+  // Parametric Mobius strip generator returning a BufferGeometry.
+  // If `thickness` > 0 it produces a thickened band (3D solid-like) by offsetting along normals
+  function createMobiusGeometry(segmentsU = 128, segmentsV = 24, radius = 0.9, width = 0.25, thickness = 0.08) {
+    const uCount = segmentsU + 1;
+    const vCount = segmentsV + 1;
+
+    // Build center surface positions and indices
+    const centerPositions = new Float32Array(uCount * vCount * 3);
+    const uStep = (Math.PI * 2) / segmentsU;
+    const vMin = -width;
+    const vMax = width;
+    let idx = 0;
+
+    for (let i = 0; i < uCount; i++) {
+      const u = i * uStep;
+      const cu = Math.cos(u);
+      const su = Math.sin(u);
+      const halfu = u / 2;
+      const chu = Math.cos(halfu);
+      const shu = Math.sin(halfu);
+
+      for (let j = 0; j < vCount; j++) {
+        const v = vMin + (j / segmentsV) * (vMax - vMin);
+        const x = (radius + v * chu) * cu;
+        const y = (radius + v * chu) * su;
+        const z = v * shu;
+
+        centerPositions[idx * 3 + 0] = x;
+        centerPositions[idx * 3 + 1] = y;
+        centerPositions[idx * 3 + 2] = z;
+        idx++;
+      }
+    }
+
+    const centerIndices: number[] = [];
+    for (let i = 0; i < segmentsU; i++) {
+      for (let j = 0; j < segmentsV; j++) {
+        const a = i * vCount + j;
+        const b = (i + 1) * vCount + j;
+        const c = (i + 1) * vCount + (j + 1);
+        const d = i * vCount + (j + 1);
+        centerIndices.push(a, b, d);
+        centerIndices.push(b, c, d);
+      }
+    }
+
+    // If no thickness requested, return a simple surface geometry
+    if (!thickness || thickness <= 0) {
+      const geom = new THREE.BufferGeometry();
+      geom.setAttribute('position', new THREE.BufferAttribute(centerPositions, 3));
+      geom.setIndex(new THREE.BufferAttribute(new (Uint32Array as any)(centerIndices), 1));
+      geom.computeVertexNormals();
+      return geom;
+    }
+
+    // Create temporary geometry to compute normals
+    const tmp = new THREE.BufferGeometry();
+    tmp.setAttribute('position', new THREE.BufferAttribute(centerPositions.slice(), 3));
+    tmp.setIndex(new THREE.BufferAttribute(new (Uint32Array as any)(centerIndices.slice()), 1));
+    tmp.computeVertexNormals();
+    const tmpNormals = (tmp.getAttribute('normal') as THREE.BufferAttribute).array as Float32Array;
+
+    // Build thick geometry: two layers offset along normals
+    const nVertices = uCount * vCount;
+    const positions = new Float32Array(nVertices * 2 * 3);
+    const normals = new Float32Array(nVertices * 2 * 3);
+    const half = thickness / 2;
+
+    for (let i = 0; i < nVertices; i++) {
+      const cx = centerPositions[i * 3 + 0];
+      const cy = centerPositions[i * 3 + 1];
+      const cz = centerPositions[i * 3 + 2];
+      const nx = tmpNormals[i * 3 + 0] || 0;
+      const ny = tmpNormals[i * 3 + 1] || 0;
+      const nz = tmpNormals[i * 3 + 2] || 0;
+
+      // outer vertex (along normal)
+      positions[i * 3 + 0] = cx + nx * half;
+      positions[i * 3 + 1] = cy + ny * half;
+      positions[i * 3 + 2] = cz + nz * half;
+      normals[i * 3 + 0] = nx;
+      normals[i * 3 + 1] = ny;
+      normals[i * 3 + 2] = nz;
+
+      // inner vertex (opposite normal)
+      const offset = nVertices * 3 + i * 3;
+      positions[offset + 0] = cx - nx * half;
+      positions[offset + 1] = cy - ny * half;
+      positions[offset + 2] = cz - nz * half;
+      normals[offset + 0] = -nx;
+      normals[offset + 1] = -ny;
+      normals[offset + 2] = -nz;
+    }
+
+    // Build indices: outer surface, inner surface (reversed), and side faces along v boundaries
+    const indices: number[] = [];
+
+    // outer surface: same as centerIndices
+    indices.push(...centerIndices);
+
+    // inner surface: same triangles but offset and reversed winding
+    for (let k = 0; k < centerIndices.length; k += 3) {
+      const a = centerIndices[k] + nVertices;
+      const b = centerIndices[k + 1] + nVertices;
+      const c = centerIndices[k + 2] + nVertices;
+      // reverse winding
+      indices.push(a, c, b);
+    }
+
+    // side faces along v = 0 and v = segmentsV (j = 0 and j = vCount-1)
+    for (let i = 0; i < segmentsU; i++) {
+      const iNext = i + 1;
+      // v = 0 edge
+      const a = i * vCount + 0;
+      const b = iNext * vCount + 0;
+      indices.push(a, b, b + nVertices);
+      indices.push(a, b + nVertices, a + nVertices);
+
+      // v = segmentsV edge
+      const c = i * vCount + (vCount - 1);
+      const d = iNext * vCount + (vCount - 1);
+      indices.push(d, c, c + nVertices);
+      indices.push(d, c + nVertices, d + nVertices);
+    }
+
+    const geom = new THREE.BufferGeometry();
+    geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geom.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
+    geom.setIndex(new THREE.BufferAttribute(new (Uint32Array as any)(indices), 1));
+    geom.computeVertexNormals();
+    return geom;
+  }
 
   // Create or update mesh whenever shape/color/scale change
   useEffect(() => {
@@ -266,6 +417,8 @@ export default function GeometryExplorer() {
         case 'Torus':
           // major radius 0.9, tube radius 0.3 to match visual scale
           return new (THREE as any).TorusGeometry(0.9, 0.3, 24, 64);
+        case 'Mobius':
+          return createMobiusGeometry(128, 24, 0.9, 0.25);
         case 'Prism': {
           const geom = new THREE.BufferGeometry();
           const a = 0.9;
@@ -295,6 +448,9 @@ export default function GeometryExplorer() {
           return new THREE.BoxGeometry(1, 1, 1);
       }
     }
+
+    // Parametric Mobius strip generator returning a BufferGeometry
+    // (moved to component scope)
 
     const geometry = makeGeometry(shape);
     const mesh = new THREE.Mesh(geometry, material);
@@ -380,6 +536,9 @@ export default function GeometryExplorer() {
         break;
       case 'Torus':
         newGeo = new (THREE as any).TorusGeometry(0.9, 0.3, 24, 64);
+        break;
+      case 'Mobius':
+        newGeo = createMobiusGeometry(128, 24, 0.9, 0.25);
         break;
       case 'Prism': {
         const geom = new THREE.BufferGeometry();
@@ -486,6 +645,7 @@ export default function GeometryExplorer() {
                 <option>Prism</option>
                 <option>Dodecahedron</option>
                 <option>Torus</option>
+                <option>Mobius</option>
                 <option>Cylinder</option>
               </select>
             </div>
