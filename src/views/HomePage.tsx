@@ -111,8 +111,8 @@ export default function HomePage() {
               },
               { 
                 icon: "🔷", 
-                title: "Simetría", 
-                desc: "Aprende patrones",
+                title: "Geometría", 
+                desc: "Interactúa con formas",
                 color: "from-blue-500 to-indigo-500"
               }
             ].map((feature) => (
