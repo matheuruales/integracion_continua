@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
-type ShapeType = 'Cube' | 'Sphere' | 'Pyramid' | 'Prism' | 'Cylinder' | 'Dodecahedron';
+type ShapeType = 'Cube' | 'Sphere' | 'Pyramid' | 'Prism' | 'Cylinder' | 'Dodecahedron' | 'Torus';
 
 type ShapeDetail = {
   title: string;
@@ -62,6 +62,15 @@ const SHAPE_DETAILS: Record<ShapeType, ShapeDetail> = {
     fact: 'Tiene 12 caras pentagonales, 20 vértices y 30 aristas; su simetría inspira arquitectura y diseño.',
     emoji: '🔷',
     accent: '#8b5cf6'
+  }
+  ,
+  Torus: {
+    title: 'Torus Hipnótico',
+    description: 'Un anillo perfecto: ideal para simulaciones, anillos y geometría topológica divertida.',
+    examples: 'Anillos, neumáticos, diseños procedurales',
+    fact: 'Un toro es una superficie con un agujero (género 1); su volumen depende del radio mayor y menor.',
+    emoji: '⭕',
+    accent: '#06b6d4'
   }
 };
 
@@ -133,6 +142,19 @@ function getShapeInfo(type: ShapeType, size: number) {
         vertices: 20,
         edges: 30,
         volume: coeff * Math.pow(a, 3)
+      };
+    }
+    case 'Torus': {
+      // approximate using major radius R = size and minor radius r = size * 0.35
+      const R = size;
+      const r = size * 0.35;
+      // Volume of torus: V = 2 * pi^2 * R * r^2
+      const volume = 2 * Math.PI * Math.PI * R * r * r;
+      return {
+        faces: 0,
+        vertices: 0,
+        edges: 0,
+        volume
       };
     }
     default:
@@ -241,6 +263,9 @@ export default function GeometryExplorer() {
         case 'Dodecahedron':
           // use a radius that visually matches other shapes
           return new (THREE as any).DodecahedronGeometry(0.9);
+        case 'Torus':
+          // major radius 0.9, tube radius 0.3 to match visual scale
+          return new (THREE as any).TorusGeometry(0.9, 0.3, 24, 64);
         case 'Prism': {
           const geom = new THREE.BufferGeometry();
           const a = 0.9;
@@ -353,6 +378,9 @@ export default function GeometryExplorer() {
       case 'Dodecahedron':
         newGeo = new (THREE as any).DodecahedronGeometry(0.9);
         break;
+      case 'Torus':
+        newGeo = new (THREE as any).TorusGeometry(0.9, 0.3, 24, 64);
+        break;
       case 'Prism': {
         const geom = new THREE.BufferGeometry();
         const a = 0.9;
@@ -457,6 +485,7 @@ export default function GeometryExplorer() {
                 <option>Pyramid</option>
                 <option>Prism</option>
                 <option>Dodecahedron</option>
+                <option>Torus</option>
                 <option>Cylinder</option>
               </select>
             </div>
