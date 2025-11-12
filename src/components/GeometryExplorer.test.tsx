@@ -28,6 +28,8 @@ jest.mock('three', () => {
   class ShadowMaterial { constructor(_opts?:any){} }
   class BufferGeometry { setAttribute(){} setIndex(){} computeVertexNormals(){} dispose(){} }
   class BufferAttribute { constructor(_arr:any,_n:number){} }
+  class DodecahedronGeometry { dispose(){} constructor(){} }
+  class TorusGeometry { dispose(){} constructor(){} }
   class TextureLoader { load(_url:string, onLoad?:any){ const t = {}; if(onLoad) onLoad(t); return t; } }
   const PCFSoftShadowMap = 1;
 
@@ -35,7 +37,7 @@ jest.mock('three', () => {
     Vector3, Color, Scene, PerspectiveCamera, WebGLRenderer,
     Mesh, MeshStandardMaterial, AmbientLight, DirectionalLight, PointLight,
     BoxGeometry, SphereGeometry, ConeGeometry, CylinderGeometry, PlaneGeometry,
-    BufferGeometry, BufferAttribute, TextureLoader, ShadowMaterial, PCFSoftShadowMap
+    BufferGeometry, BufferAttribute, DodecahedronGeometry, TorusGeometry, TextureLoader, ShadowMaterial, PCFSoftShadowMap
   };
 });
 
